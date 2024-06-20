@@ -1,0 +1,173 @@
+
+1)Launch t2.medium ubuntu 20.04 as k-master
+
+2)Launch t2.micro ubuntu 20.04 as k-WN
+
+.......
+
+7) kubeadm init 
+
+	-this will generate the join token
+
+        -paste this token on kubernetes WorkerNode
+
+8)  mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+9)kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+10)kubectl get nodes
+
+11)nano nginx.yaml
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+
+
+ kubectl create -f nginx.yml
+ 
+ kubectl get po -o wide
+
+  curl 10.44.0.2
+  
+Note : change replicas no ,save and exit nginx.yml
+
+ kubectl apply -f nginx.yml
+
+ kubectl get pods --all-namespaces
+
+ Note:Services
+
+	-clusterip
+	-loadbalancer
+	-nodeport
+	-to delete service : kubectl delete service nginx
+
+
+kubectl create service clusterip nginx --tcp=80:80
+kubectl create service clusterip httpd --tcp=82:80
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.35.0/deploy/static/provider/baremetal/deploy.yaml
+
+
+
+demo.yml
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  name: demo-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              serviceName: nginx
+              servicePort: 80
+            path: /nginx
+          - backend:
+              serviceName: httpd
+              servicePort: 82
+            path: /httpd
+
+kubectl create -f demo.yml
+
+kubectl get nodes
+kubectl get pods
+kubectl get svc
+
+kubectl get ing
+kubectl  get svc  --all-namespaces
+kubectl get svc -n ingress-nginx
+
+-----------------------------------------------------------
+
+DashBoard :
+
+
+ Refer below link for K8S Dashboard.
+ https://github.com/kubernetes/dashboard
+
+ 1) kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.3/aio/deploy/recommended.yaml
+ 2) kubectl get svc -n kubernetes-dashboard
+ 3) kubectl edit svc -n kubernetes-dashboard
+    Note: change type from clisterIP to Nodeport
+ k8s-app: kubernetes-dashboard
+ sessionAffinity: None
+ type: NodePort
+ status:
+ loadBalancer: {}
+ kind: List
+ metadata: {}
+
+ 4)Now Generate token :
+   i)create two yml files (sa.yml,crb.yml)
+
+#create service account
+ sa.yml
+ -------
+--- 
+apiVersion: v1
+kind: ServiceAccount
+metadata: 
+  name: admin-user
+  namespace: kubernetes-dashboard
+
+#Bind ClusterAdmin Role to the service account
+
+ crb.yml
+ --------
+--- 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: 
+  name: admin-user
+roleRef: 
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects: 
+  - 
+    kind: ServiceAccount
+    name: admin-user
+    namespace: kubernetes-dashboard
+
+   >kubectl create -f sa.yml
+   >kubectl create -f crb.yml
+   >kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
+
+   kubectl -n kubernetes-dashboard get service kubernetes-dashboard
+ on Browser
+   k8s-master-public-ip:Nodeport
+   copy token from terminal and paste on browser
+
+
+
+
+
+
+

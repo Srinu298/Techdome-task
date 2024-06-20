@@ -1,0 +1,47 @@
+On ubuntu :
+
+sudo curl -L "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-	$(uname -m)" -o /usr/local/bin/docker-compose
+
+sudo chmod +x /usr/local/bin/docker-compose
+
+#Application@1
+
+docker-compose.yml
+=============
+---
+version: "3"
+services: 
+  sample1: 
+    image: httpd
+    ports: 
+      - "80:80"
+  sample2: 
+    image: nginx
+    ports: 
+      - "82:80"
+
+
+>docker-compose up –d
+>docker images
+>docker ps
+>Check in the Browser
+==============================
+
+#Application@2
+
+---
+services:
+  databases:
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=demo_db
+    image: mysql
+    ports:
+      - "3306:3306"
+  web:
+    image: nginx
+    ports: 
+      - "84:80"
+version: "3"

@@ -1,0 +1,51 @@
+Install and Set Up kubectl on Windows:
+https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+
+	https://dl.k8s.io/release/v1.23.0/bin/windows/amd64/kubectl.exe
+
+download kubectl.exe and place in side folder
+
+configure IAM user in cmd
+cd C:\Users\user\Desktop\users
+
+	aws eks --region <region-code> update-kubeconfig --name <cluster_name>
+
+	aws eks --region us-east-2 update-kubeconfig --name eks-demo
+	aws eks --region ap-south-1 update-kubeconfig --name eks-demo
+
+	kubectl get nodes
+	kubectl get svc
+	notepad nginx.yml
+	kubectl create -f nginx.yml
+	kubectl get pods
+	kubectl create service loadbalancer nginx --tcp=80:80
+	kubectl get svc
+	-copy External IP from cmd (a9f1d2b9be55c40beba9981f8d787d1b-1361866503.us-east-1.elb.amazonaws.com)
+	 Paste on the browser
+	-check loadbalancers on top EC2 Dashboard,
+
+
+nginx file
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
